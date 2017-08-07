@@ -1,9 +1,10 @@
-	package Skycam;
+package com.marginallyclever.Skycam;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -56,19 +57,19 @@ implements ActionListener, SerialConnectionReadyListener
 {
 	static final long serialVersionUID=1;
 	
-	static JFrame mainframe;
+	static JFrame mainFrame;
 	static Skycam singleton=null;
 	
 	// menus
 	private JMenuBar menuBar;
 	private JMenuItem buttonOpenFile, buttonExit;
     private JMenuItem [] buttonRecent = new JMenuItem[10];
-	private JMenuItem buttonRescan, buttonJogMotors, buttonMachineLimits, buttonDisconnect;
+	private JMenuItem buttonJogMotors, buttonMachineLimits, buttonDisconnect;
 	private JMenuItem buttonStart, buttonPause, buttonHalt, buttonDrive;
 	
 	// serial connections
-	private SerialConnection connectionBerlin;
-	private SerialConnection connectionTokyo;
+	private SkycamRobot connectionBerlin;
+	private SkycamRobot connectionTokyo;
 	private boolean aReady=false, bReady=false, wasConfirmed=false;
 
 	// settings
@@ -100,8 +101,8 @@ implements ActionListener, SerialConnectionReadyListener
 		
 		LoadConfig();
 		
-		connectionBerlin = new SerialConnection("A");
-		connectionTokyo = new SerialConnection("B");
+		connectionBerlin = new SkycamRobot("A");
+		connectionTokyo = new SkycamRobot("B");
 		
 		connectionBerlin.addListener(this);
 		connectionTokyo.addListener(this);
@@ -114,7 +115,7 @@ implements ActionListener, SerialConnectionReadyListener
 		return singleton;
 	}
 	
-	public void SerialConnectionReady(SerialConnection arg0) {
+	public void SerialConnectionReady(SkycamRobot arg0) {
 		if(arg0==connectionBerlin) aReady=true;
 		if(arg0==connectionTokyo) bReady=true;
 		
@@ -133,26 +134,20 @@ implements ActionListener, SerialConnectionReadyListener
 		Object subject = e.getSource();
 		
 		if(subject==buttonExit) {
-			System.exit(0);  // @TODO: be more graceful?
+			quit();
 			return;
 		}
 		if(subject==buttonOpenFile) {
-			OpenFileDialog();
-			return;
-		}
-		if(subject==buttonRescan) {
-			connectionBerlin.DetectSerialPorts();
-			connectionTokyo.DetectSerialPorts();
-			UpdateMenuBar();
+			openFileDialog();
 			return;
 		}
 		if(subject==buttonMachineLimits) {
-			UpdateMachineLimits();
+			updateMachineLimits();
 			return;
 		}
 		if(subject==buttonDisconnect) {
-			connectionBerlin.ClosePort();
-			connectionTokyo.ClosePort();
+			connectionBerlin.closePort();
+			connectionTokyo.closePort();
 			return;
 		}
 		if(subject==buttonStart) {
@@ -226,7 +221,7 @@ implements ActionListener, SerialConnectionReadyListener
 	 * Open the driving dialog
 	 */
 	public void Drive() {
-		JDialog driver = new JDialog(mainframe,"Manual Control",true);
+		JDialog driver = new JDialog(mainFrame,"Manual Control",true);
 		driver.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		
@@ -315,7 +310,7 @@ implements ActionListener, SerialConnectionReadyListener
 	
 	
 	protected void JogMotors() {
-		JDialog driver = new JDialog(mainframe,"Jog Motors",true);
+		JDialog driver = new JDialog(mainFrame,"Jog Motors",true);
 		driver.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		
@@ -470,8 +465,8 @@ implements ActionListener, SerialConnectionReadyListener
 		}
 
 		// send relevant part of line to the robot
-		connectionBerlin.SendCommand(line);
-		connectionTokyo.SendCommand(line);
+		connectionBerlin.sendCommand(line);
+		connectionTokyo.sendCommand(line);
 		
 		return true;
 	}
@@ -525,7 +520,7 @@ implements ActionListener, SerialConnectionReadyListener
 	}
 
 	private void SendConfig() {
-		connectionBerlin.SendCommand("CONFIG A"+String.valueOf(m1.x)  // position of 10:00 motor
+		connectionBerlin.sendCommand("CONFIG A"+String.valueOf(m1.x)  // position of 10:00 motor
 				                     +" B"+String.valueOf(m1.y)
 				                     +" C"+String.valueOf(m1.z)
 				                     +" D"+String.valueOf(m2.x)  // position of 2:00 motor
@@ -535,7 +530,7 @@ implements ActionListener, SerialConnectionReadyListener
 				                     +" I"+(m1invert?"-1":"1")
 				                     +" J"+(m2invert?"-1":"1"));  // name of motors, inversion
 		 
-		connectionTokyo.SendCommand("CONFIG A"+String.valueOf(m3.x)  // position of 4:30 motor
+		connectionTokyo.sendCommand("CONFIG A"+String.valueOf(m3.x)  // position of 4:30 motor
 					                 +" B"+String.valueOf(m3.y)
 					                 +" C"+String.valueOf(m3.z)
 					                 +" D"+String.valueOf(m4.x)  // position of 7:30 motor
@@ -547,53 +542,54 @@ implements ActionListener, SerialConnectionReadyListener
 		SendLineToRobot("TELEPORT X0 Y0 Z0");	
 	}
 	
-	protected void UpdateMachineLimits() {
-		final JDialog driver = new JDialog(mainframe,"Machine Limits",true);
-		driver.setLayout(new GridBagLayout());
-		GridBagConstraints c = new GridBagConstraints();
+	protected void updateMachineLimits() {
+		JDialog driver = new JDialog(mainFrame,"Motor locations",true);
+		driver.setLayout(new GridLayout(6,4));
 		
-		final JTextField m1x = new JTextField(String.valueOf(m1.x));
-		final JTextField m1y = new JTextField(String.valueOf(m1.y));
-		final JTextField m1z = new JTextField(String.valueOf(m1.z));
+		JTextField m1x = new JTextField(String.valueOf(m1.x));
+		JTextField m1y = new JTextField(String.valueOf(m1.y));
+		JTextField m1z = new JTextField(String.valueOf(m1.z));
 		
-		final JTextField m2x = new JTextField(String.valueOf(m2.x));
-		final JTextField m2y = new JTextField(String.valueOf(m2.y));
-		final JTextField m2z = new JTextField(String.valueOf(m2.z));
+		JTextField m2x = new JTextField(String.valueOf(m2.x));
+		JTextField m2y = new JTextField(String.valueOf(m2.y));
+		JTextField m2z = new JTextField(String.valueOf(m2.z));
 		
-		final JTextField m3x = new JTextField(String.valueOf(m3.x));
-		final JTextField m3y = new JTextField(String.valueOf(m3.y));
-		final JTextField m3z = new JTextField(String.valueOf(m3.z));
+		JTextField m3x = new JTextField(String.valueOf(m3.x));
+		JTextField m3y = new JTextField(String.valueOf(m3.y));
+		JTextField m3z = new JTextField(String.valueOf(m3.z));
 		
-		final JTextField m4x = new JTextField(String.valueOf(m4.x));
-		final JTextField m4y = new JTextField(String.valueOf(m4.y));
-		final JTextField m4z = new JTextField(String.valueOf(m4.z));
+		JTextField m4x = new JTextField(String.valueOf(m4.x));
+		JTextField m4y = new JTextField(String.valueOf(m4.y));
+		JTextField m4z = new JTextField(String.valueOf(m4.z));
 
 		JButton ok = new JButton("Ok");
 		JButton cancel = new JButton("Cancel");
 
-		c.gridx=1;	c.gridy=0;	driver.add(new JLabel("X"),c);
-		c.gridx=2;	c.gridy=0;	driver.add(new JLabel("Y"),c);
-		c.gridx=3;	c.gridy=0;	driver.add(new JLabel("Z"),c);
-		c.gridx=0;	c.gridy=1;	driver.add(new JLabel("A"),c);
-		c.gridx=0;	c.gridy=2;	driver.add(new JLabel("B"),c);
-		c.gridx=0;	c.gridy=3;	driver.add(new JLabel("C"),c);
-		c.gridx=0;	c.gridy=4;	driver.add(new JLabel("D"),c);
-		
-		c.gridx=1;	c.gridy=1;	driver.add(m1x,c);
-		c.gridx=2;	c.gridy=1;	driver.add(m1y,c);
-		c.gridx=3;	c.gridy=1;	driver.add(m1z,c);
-		c.gridx=1;	c.gridy=2;	driver.add(m2x,c);
-		c.gridx=2;	c.gridy=2;	driver.add(m2y,c);
-		c.gridx=3;	c.gridy=2;	driver.add(m2z,c);
-		c.gridx=1;	c.gridy=3;	driver.add(m3x,c);
-		c.gridx=2;	c.gridy=3;	driver.add(m3y,c);
-		c.gridx=3;	c.gridy=3;	driver.add(m3z,c);
-		c.gridx=1;	c.gridy=4;	driver.add(m4x,c);
-		c.gridx=2;	c.gridy=4;	driver.add(m4y,c);
-		c.gridx=3;	c.gridy=4;	driver.add(m4z,c);
+		driver.add(new JLabel(" "));
+		driver.add(new JLabel("X"));
+		driver.add(new JLabel("Y"));
+		driver.add(new JLabel("Z"));
+		driver.add(new JLabel("A"));
+		driver.add(m1x);
+		driver.add(m1y);
+		driver.add(m1z);
+		driver.add(new JLabel("B"));
+		driver.add(m2x);
+		driver.add(m2y);
+		driver.add(m2z);
+		driver.add(new JLabel("C"));
+		driver.add(m3x);
+		driver.add(m3y);
+		driver.add(m3z);
+		driver.add(new JLabel("D"));
+		driver.add(m4x);
+		driver.add(m4y);
+		driver.add(m4z);
 
-		c.gridx=2;	c.gridy=5;	driver.add(ok,c);
-		c.gridx=3;	c.gridy=5;	driver.add(cancel,c);
+		driver.add(new JLabel(" "));
+		driver.add(new JLabel(" "));
+		driver.add(ok);
+		driver.add(cancel);
 
 		ok.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -730,7 +726,7 @@ implements ActionListener, SerialConnectionReadyListener
 	}
 	
 	// creates a file open dialog. If you don't cancel it opens that file.
-	public void OpenFileDialog() {
+	public void openFileDialog() {
 	    // Note: source for ExampleFileFilter can be found in FileChooserDemo,
 	    // under the demo/jfc directory in the Java 2 SDK, Standard Edition.
 		String filename = (recentFiles[0].length()>0) ? filename=recentFiles[0] : "";
@@ -804,11 +800,6 @@ implements ActionListener, SerialConnectionReadyListener
         subMenu = connectionTokyo.getMenu();
         subMenu.setText("Arduino 2 Port");
         menu.add(subMenu);
-
-        buttonRescan = new JMenuItem("Rescan Ports",KeyEvent.VK_N);
-        buttonRescan.getAccessibleContext().setAccessibleDescription("Rescan the available ports.");
-        buttonRescan.addActionListener(this);
-        menu.add(buttonRescan);
 
         buttonMachineLimits = new JMenuItem("Set Machine Limits",KeyEvent.VK_M);
         buttonMachineLimits.addActionListener(this);
@@ -892,17 +883,21 @@ implements ActionListener, SerialConnectionReadyListener
     // Create the GUI and show it.  For thread safety, this method should be invoked from the event-dispatching thread.
     private static void CreateAndShowGUI() {
         //Create and set up the window.
-    	mainframe = new JFrame("SkyCam");
-        mainframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    	mainFrame = new JFrame("SkyCam");
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
  
         //Create and set up the content pane.
         Skycam demo = Skycam.getSingleton();
-        mainframe.setJMenuBar(demo.CreateMenuBar());
-        mainframe.setContentPane(demo.CreateContentPane());
+        mainFrame.setJMenuBar(demo.CreateMenuBar());
+        mainFrame.setContentPane(demo.CreateContentPane());
  
         //Display the window.
-        mainframe.setSize(1100,500);
-        mainframe.setVisible(true);
+        mainFrame.setSize(1100,500);
+        mainFrame.setVisible(true);
+    }
+    
+    protected void quit() {
+		mainFrame.dispose();
     }
     
     public static void main(String[] args) {

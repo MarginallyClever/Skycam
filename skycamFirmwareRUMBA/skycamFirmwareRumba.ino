@@ -183,17 +183,17 @@ void M101() {
 
 // M102 report motor positions
 void M102() {
-  Serial.print(F("M101 Q0 X"));  Serial.print(limit_ax);  Serial.print(F(" Y");  Serial.print(limit_ay);  Serial.print(F(" Z");  Serial.print(limit_az);
-  Serial.print(F("M101 Q1 X"));  Serial.print(limit_bx);  Serial.print(F(" Y");  Serial.print(limit_by);  Serial.print(F(" Z");  Serial.print(limit_bz);
-  Serial.print(F("M101 Q2 X"));  Serial.print(limit_cx);  Serial.print(F(" Y");  Serial.print(limit_cy);  Serial.print(F(" Z");  Serial.print(limit_cz);
-  Serial.print(F("M101 Q3 X"));  Serial.print(limit_dx);  Serial.print(F(" Y");  Serial.print(limit_dy);  Serial.print(F(" Z");  Serial.print(limit_dz);
+  Serial.print(F("M101 Q0 X"));  Serial.print(limit_ax);  Serial.print(F(" Y"));  Serial.print(limit_ay);  Serial.print(F(" Z"));  Serial.print(limit_az);
+  Serial.print(F("M101 Q1 X"));  Serial.print(limit_bx);  Serial.print(F(" Y"));  Serial.print(limit_by);  Serial.print(F(" Z"));  Serial.print(limit_bz);
+  Serial.print(F("M101 Q2 X"));  Serial.print(limit_cx);  Serial.print(F(" Y"));  Serial.print(limit_cy);  Serial.print(F(" Z"));  Serial.print(limit_cz);
+  Serial.print(F("M101 Q3 X"));  Serial.print(limit_dx);  Serial.print(F(" Y"));  Serial.print(limit_dy);  Serial.print(F(" Z"));  Serial.print(limit_dz);
 }
 
 
 // M103 save motor positions
 void M103() {
   saveDimensions();
-  Serial.println(F("Motor positions saved.");
+  Serial.println(F("Motor positions saved."));
 }
 
 
@@ -201,7 +201,7 @@ void M103() {
  * Test that IK(FK(A))=A
  */
 void testKinematics() {/*
-  long A[NUM_AXIES],i,j;
+  long A[NUM_MOTORS],i,j;
   float C,D,x=0,y=0;
 
   for(i=0;i<3000;++i) {
@@ -212,7 +212,7 @@ void testKinematics() {/*
     FK(A,C,D);
     Serial.print(F("\tx="));  Serial.print(x);
     Serial.print(F("\ty="));  Serial.print(y);
-    for(int j=0;j<NUM_AXIES;++j) {
+    for(int j=0;j<NUM_MOTORS;++j) {
       Serial.print('\t');
       Serial.print(AxisLetters[j]);
       Serial.print(A[j]);
@@ -232,7 +232,7 @@ void testKinematics() {/*
  * @input new_feed_rate speed to travel along arc
  */
 void polargraph_line(float x,float y,float z,float new_feed_rate) {
-  long steps[NUM_AXIES];
+  long steps[NUM_MOTORS];
   IK(x,y,z,steps);
   posx=x;
   posy=y;
@@ -344,7 +344,7 @@ void teleport(float x,float y,float z) {
   posz=z;
 
   // @TODO: posz?
-  long steps[NUM_AXIES];
+  long steps[NUM_MOTORS];
   IK(posx,posy,posz,steps);
   motor_set_step_count(steps);
 }
@@ -541,8 +541,8 @@ void processCommand() {
       pause(delayTime);
       break;
     }
-  case 28:  findHome();  break;
-  case 29:  calibrateBelts();  break;
+  //case 28:  findHome();  break;
+  //case 29:  calibrateBelts();  break;
   case 54:
   case 55:
   case 56:
@@ -560,9 +560,8 @@ void processCommand() {
   case 92: {  // set position (teleport)
       Vector3 offset = get_end_plus_offset();
       teleport( parseNumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
-                 parseNumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y)
-               //parseNumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z)
-                 );
+                parseNumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
+                parseNumber('Z',(absolute_mode?offset.z:0)*10)*0.1 + (absolute_mode?0:offset.z) );
       break;
     }
   default:  break;
@@ -570,12 +569,9 @@ void processCommand() {
 
   cmd=parseNumber('D',-1);
   switch(cmd) {
-  case 0: {  // jog one motor
-    jogMotorTest();
-    break;
+  case 0:  jogMotorTest();  break;  // jog one motor
   case 4:  SD_StartPrintingFile(strchr(serialBuffer,' ')+1);  break;  // read file
-  case 5:
-    sayVersionNumber();
+  case 5:  sayVersionNumber();  break;
   case 6:  // set home
     setHome(parseNumber('X',(absolute_mode?homeX:0)*10)*0.1 + (absolute_mode?0:homeX),
             parseNumber('Y',(absolute_mode?homeY:0)*10)*0.1 + (absolute_mode?0:homeY),
@@ -610,10 +606,11 @@ void jogMotorTest() {
       return;
   }
   
-  digitalWrite(dirPin,amount < 0 ? motors[0].reel_in : motors[0].reel_out);
+  int amount=parseNumber('A',0);
+  digitalWrite(dirPin,amount < 0 ? motors[q].reel_in : motors[q].reel_out);
   findStepDelay();
   int i;
-  for(i=0;i<STEPS_PER_TURN;++i) {
+  for(i=0;i<amount;++i) {
     digitalWrite(stepPin,HIGH);
     digitalWrite(stepPin,LOW);
     pause(step_delay);
@@ -645,7 +642,7 @@ void setHome(float x,float y,float z) {
     homeX = x;
     homeY = y;
     homeZ = z;
-    saveHome();
+    //saveHome();
   }
 }
 

@@ -3,20 +3,10 @@ package com.marginallyclever.Skycam;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.TooManyListenersException;
 import java.util.prefs.Preferences;
 
-import javax.swing.ButtonGroup;
 import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
@@ -27,8 +17,7 @@ import com.marginallyclever.communications.NetworkConnectionManager;
 public class SkycamRobot
 implements NetworkConnectionListener {
 	private static String CUE="> ";
-	private static String NL="\n";
-	public static int BAUD_RATE = 57600;
+	private static String NEWLINE="\n";
 	
 	public NetworkConnection serialPort;
 	public boolean portOpened=false;
@@ -51,7 +40,7 @@ implements NetworkConnectionListener {
 
 	
 	public SkycamRobot(String name) {
-		prefs = Preferences.userRoot().node("SerialConnection").node(name);
+		prefs = Preferences.userRoot().node("SkycamRobot");
 	}
 	
 	public void Log(String msg) {
@@ -127,7 +116,7 @@ implements NetworkConnectionListener {
 		      notifyListeners();
 		      return;
 		}
-		String command=commandQueue.remove(0)+";"+NL;
+		String command=commandQueue.remove(0)+";"+NEWLINE;
 		Log(command);
 		try {
 			serialPort.sendMessage(command);
@@ -186,7 +175,7 @@ implements NetworkConnectionListener {
 
 	public JMenu getMenu() {
 		JMenu subMenu = new JMenu();
-	    ButtonGroup group = new ButtonGroup();
+	    //ButtonGroup group = new ButtonGroup();
 	    
 	    return subMenu;
 	}

@@ -256,41 +256,36 @@ void LCD_drive_menu() {
 void LCD_driveX() {
   if(lcd_click_now) MENU_GOTO(LCD_drive_menu);
 
+  Vector3 offset=get_end_plus_offset();
   if(lcd_turn) {
-      Vector3 offset=get_end_plus_offset();
     line_safe(offset.x+lcd_turn,offset.y,offset.z,feed_rate);
   }
   
-  lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(posx);
+  lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(offset.x);
 }
 
 
 void LCD_driveY() {
   if(lcd_click_now) MENU_GOTO(LCD_drive_menu);
 
+  Vector3 offset=get_end_plus_offset();
   if(lcd_turn) {
-      Vector3 offset=get_end_plus_offset();
     line_safe(offset.x,offset.y+lcd_turn,offset.z,feed_rate);
   }
   
-  lcd.setCursor( 0, 0);  lcd.print('Y');  LCD_print_float(posy);
+  lcd.setCursor( 0, 0);  lcd.print('Y');  LCD_print_float(offset.y);
 }
 
 
 void LCD_driveZ() {
   if(lcd_click_now) MENU_GOTO(LCD_drive_menu);
 
+  Vector3 offset=get_end_plus_offset();
   if(lcd_turn) {
-    // protect servo, don't drive beyond physical limits
-      Vector3 offset=get_end_plus_offset();
-    float newZ = offset.z + lcd_turn;
-    if(newZ<10) newZ=10;
-    if(newZ>170) newZ=170;
-    // move
-    line_safe(offset.x,offset.y,newZ,feed_rate);
+    line_safe(offset.x,offset.y,offset.z+lcd_turn,feed_rate);
   }
   
-  lcd.setCursor( 0, 0);  lcd.print('Z');  LCD_print_float(posz);
+  lcd.setCursor( 0, 0);  lcd.print('Z');  LCD_print_float(offset.z);
 }
 
 

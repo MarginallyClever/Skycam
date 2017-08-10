@@ -9,7 +9,7 @@
 //------------------------------------------------------------------------------
 // INCLUDES
 //------------------------------------------------------------------------------
-#include "MServo.h"
+#include "configure.h"
 
 
 //------------------------------------------------------------------------------
@@ -25,8 +25,6 @@ volatile int current_segment=0;
 volatile int last_segment=0;
 int step_multiplier, nominal_step_multiplier;
 unsigned short nominal_OCR1A;
-
-Servo servos[NUM_SERVOS];
 
 // used by timer1 to optimize interrupt inner loop
 int steps_total;
@@ -46,18 +44,14 @@ int delta1;
 int over1;
 long global_steps_1;
 int global_step_dir_1;
-#if NUM_MOTORS>=4
+int delta2;
+int over2;
+long global_steps_2;
+int global_step_dir_2;
 int delta3;
 int over3;
 long global_steps_3;
 int global_step_dir_3;
-#endif
-#if NUM_MOTORS>=5
-int delta4;
-int over4;
-long global_steps_4;
-int global_step_dir_4;
-#endif
 
 
 const char *AxisLetters="XYZ";
@@ -105,18 +99,16 @@ void motor_setup() {
   motors[1].dir_pin         =MOTOR_1_DIR_PIN;
   motors[1].enable_pin      =MOTOR_1_ENABLE_PIN;
   motors[1].limit_switch_pin=MOTOR_1_LIMIT_SWITCH_PIN;
-#if NUM_MOTORS>=4
-  motors[3].step_pin        =MOTOR_2_STEP_PIN;
-  motors[3].dir_pin         =MOTOR_2_DIR_PIN;
-  motors[3].enable_pin      =MOTOR_2_ENABLE_PIN;
-  motors[3].limit_switch_pin=MOTOR_2_LIMIT_SWITCH_PIN;
-#endif
-#if NUM_MOTORS>=5
-  motors[4].step_pin        =MOTOR_3_STEP_PIN;
-  motors[4].dir_pin         =MOTOR_3_DIR_PIN;
-  motors[4].enable_pin      =MOTOR_3_ENABLE_PIN;
-  motors[4].limit_switch_pin=MOTOR_3_LIMIT_SWITCH_PIN;
-#endif
+
+  motors[2].step_pin        =MOTOR_2_STEP_PIN;
+  motors[2].dir_pin         =MOTOR_2_DIR_PIN;
+  motors[2].enable_pin      =MOTOR_2_ENABLE_PIN;
+  motors[2].limit_switch_pin=MOTOR_2_LIMIT_SWITCH_PIN;
+
+  motors[3].step_pin        =MOTOR_3_STEP_PIN;
+  motors[3].dir_pin         =MOTOR_3_DIR_PIN;
+  motors[3].enable_pin      =MOTOR_3_ENABLE_PIN;
+  motors[3].limit_switch_pin=MOTOR_3_LIMIT_SWITCH_PIN;
 
   int i;
   for(i=0;i<NUM_MOTORS;++i) {
@@ -135,35 +127,14 @@ void motor_setup() {
   memset(steps,0,NUM_MOTORS*sizeof(long));
   motor_set_step_count(steps);
 
-  // setup servos
-#if NUM_SERVOS>0
-  servos[0].attach(SERVO0_PIN);
-#endif
-#if NUM_SERVOS>1
-  servos[1].attach(SERVO1_PIN);
-#endif
-#if NUM_SERVOS>2
-  servos[2].attach(SERVO2_PIN);
-#endif
-#if NUM_SERVOS>3
-  servos[3].attach(SERVO3_PIN);
-#endif
-#if NUM_SERVOS>4
-  servos[4].attach(SERVO4_PIN);
-#endif
-
   current_segment=0;
   last_segment=0;
   Segment &old_seg = line_segments[get_prev_segment(last_segment)];
   old_seg.a[0].step_count=0;
   old_seg.a[1].step_count=0;
   old_seg.a[2].step_count=0;
-#if NUM_MOTORS>=4
   old_seg.a[3].step_count=0;
-#endif
-#if NUM_MOTORS>=5
-  old_seg.a[4].step_count=0;
-#endif
+
   working_seg = NULL;
 
   // disable global interrupts
@@ -387,20 +358,12 @@ void motor_set_step_count(long *a) {
   old_seg.a[0].step_count=a[0];
   old_seg.a[1].step_count=a[1];
   old_seg.a[2].step_count=a[2];
-#if NUM_MOTORS>=4
   old_seg.a[3].step_count=a[3];
-#endif
-#if NUM_MOTORS>=5
-  old_seg.a[4].step_count=a[4];
-#endif
+
   global_steps_0=0;
   global_steps_1=0;
-#if NUM_MOTORS>=4
+  global_steps_2=0;
   global_steps_3=0;
-#endif
-#if NUM_MOTORS>=5
-  global_steps_4=0;
-#endif
 }
 
 
@@ -481,9 +444,6 @@ ISR(TIMER1_COMPA_vect) {
       global_step_dir_4 = (working_seg->a[4].dir==HIGH)?1:-1;
       #endif
 
-      //move the z axis
-      servos[0].write(working_seg->a[2].step_count);
-
       // set frequency to segment feed rate
       nominal_OCR1A = calc_timer(working_seg->feed_rate_max);
       nominal_step_multiplier = step_multiplier;
@@ -536,21 +496,16 @@ ISR(TIMER1_COMPA_vect) {
       if(over1 > 0) {
         digitalWrite(MOTOR_1_STEP_PIN,LOW);
       }
-      // M2 is the servo Z axis
-#if NUM_MOTORS>=4
+      // M2
+      over2 += delta2;
+      if(over2 > 0) {
+        digitalWrite(MOTOR_2_STEP_PIN,LOW);
+      }
       // M3
       over3 += delta3;
       if(over3 > 0) {
-        digitalWrite(MOTOR_2_STEP_PIN,LOW);
-      }
-#endif
-#if NUM_MOTORS>=5
-      // M4
-      over4 += delta4;
-      if(over4 > 0) {
         digitalWrite(MOTOR_3_STEP_PIN,LOW);
       }
-#endif
       // now that the pins have had a moment to settle, do the second half of the steps.
       // M0
       if(over0 > 0) {
@@ -564,23 +519,18 @@ ISR(TIMER1_COMPA_vect) {
         global_steps_1+=global_step_dir_1;
         digitalWrite(MOTOR_1_STEP_PIN,HIGH);
       }
-      // M2 is the servo Z axis
-#if NUM_MOTORS>=4
+      // M2
+      if(over2 > 0) {
+        over2 -= steps_total;
+        global_steps_2+=global_step_dir_2;
+        digitalWrite(MOTOR_2_STEP_PIN,HIGH);
+      }
       // M3
       if(over3 > 0) {
         over3 -= steps_total;
         global_steps_3+=global_step_dir_3;
-        digitalWrite(MOTOR_2_STEP_PIN,HIGH);
-      }
-#endif
-#if NUM_MOTORS>=5
-      // M4
-      if(over4 > 0) {
-        over4 -= steps_total;
-        global_steps_4+=global_step_dir_4;
         digitalWrite(MOTOR_3_STEP_PIN,HIGH);
       }
-#endif
       
       // make a step
       steps_taken++;
@@ -635,7 +585,7 @@ char segment_buffer_full() {
 
 /**
  * Uses bresenham's line algorithm to move both motors
- * @param n NUM_MOTORS longs, one for each motor/servo
+ * @param n NUM_MOTORS longs, one for each motor
  **/
 void motor_line(long *n,float new_feed_rate) {
   // get the next available spot in the segment buffer
@@ -660,20 +610,11 @@ void motor_line(long *n,float new_feed_rate) {
   Serial.print(n1);  Serial.print('\t');
   Serial.print(n2);  Serial.print('\n');
 */
-  new_seg.a[0].step_count = n[0];
-  new_seg.a[0].delta = n[0] - old_seg.a[0].step_count;
-  new_seg.a[1].step_count = n[1];
-  new_seg.a[1].delta = n[1] - old_seg.a[1].step_count;
-  new_seg.a[2].step_count = n[2];
-  new_seg.a[2].delta = n[2] - old_seg.a[2].step_count;
-  #if NUM_MOTORS>=4
-  new_seg.a[3].step_count = n[3];
-  new_seg.a[3].delta = n[3] - old_seg.a[3].step_count;
-  #endif
-  #if NUM_MOTORS>=5
-  new_seg.a[4].step_count = n[4];
-  new_seg.a[4].delta = n[4] - old_seg.a[4].step_count;
-  #endif
+  new_seg.a[0].step_count = n[0];  new_seg.a[0].delta = n[0] - old_seg.a[0].step_count;
+  new_seg.a[1].step_count = n[1];  new_seg.a[1].delta = n[1] - old_seg.a[1].step_count;
+  new_seg.a[2].step_count = n[2];  new_seg.a[2].delta = n[2] - old_seg.a[2].step_count;
+  new_seg.a[3].step_count = n[3];  new_seg.a[3].delta = n[3] - old_seg.a[3].step_count;
+
   new_seg.feed_rate_max = new_feed_rate;
   new_seg.busy=false;
 

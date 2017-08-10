@@ -115,9 +115,6 @@
 #define MOTOR_5_ENABLE_PIN        (39)
 #define MOTOR_5_LIMIT_SWITCH_PIN  (32)
 
-#define NUM_SERVOS                (1)
-#define SERVO0_PIN                (5)
-
 #define LIMIT_SWITCH_PIN_LEFT     (MOTOR_0_LIMIT_SWITCH_PIN)
 #define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
 

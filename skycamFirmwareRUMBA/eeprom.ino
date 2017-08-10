@@ -9,9 +9,26 @@
 //------------------------------------------------------------------------------
 // INCLUDES
 //------------------------------------------------------------------------------
-// Saving config
+#include "configure.h"
 #include <EEPROM.h>
 #include <Arduino.h>  // for type definitions
+
+
+extern float limit_ax;
+extern float limit_ay;
+extern float limit_az;
+
+extern float limit_bx;
+extern float limit_by;
+extern float limit_bz;
+
+extern float limit_cx;
+extern float limit_cy;
+extern float limit_cz;
+
+extern float limit_dx;
+extern float limit_dy;
+extern float limit_dz;
 
 
 //------------------------------------------------------------------------------

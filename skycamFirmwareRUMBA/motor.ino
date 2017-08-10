@@ -203,21 +203,6 @@ void motor_disengage() {
 }
 
 
-// Change pen state.
-void setPenAngle(int pen_angle) {
-  if(posz!=pen_angle) {
-    posz=pen_angle;
-
-    if(posz<PEN_DOWN_ANGLE) posz=PEN_DOWN_ANGLE;
-    if(posz>PEN_UP_ANGLE  ) posz=PEN_UP_ANGLE;
-
-    servos[0].write(posz);
-  }
-}
-
-
-
-
 void recalculate_reverse2(Segment *prev,Segment *current,Segment *next) {
   if(current==NULL) return;
   if(next==NULL) return;

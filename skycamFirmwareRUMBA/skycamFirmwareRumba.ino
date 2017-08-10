@@ -166,7 +166,7 @@ void FK(long *motorStepArray,float &x,float &y,float &z) {
  */
 void M101() {
   // motor number 1=a,2=b,3=c,4=d
-  float q = parseNumber('Q',-1);
+  int q = parseNumber('Q',-1);
   float x,y,z;
   switch(q) {
     case 0:  x = parseNumber('X',limit_ax);  y = parseNumber('Y',limit_ay);  z = parseNumber('Z',limit_az);  break;
@@ -586,7 +586,10 @@ void processCommand() {
     break;
   case 11:
     // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
-    adjustDimensions(50,-50,50,-50,50,0);
+    adjustDimensions( 50, 50,50,
+                     -50, 50,50,
+                     -50,-50,50,
+                      50,-50,50);
     break;
   default:  break;
   }

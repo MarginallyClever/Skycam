@@ -38,6 +38,8 @@
 #define DEFAULT_FEEDRATE     (7000.0)
 #define DEFAULT_ACCELERATION (2500)
 
+#define PLOTTER_RADIUS       (6.0)
+#define PLOTTER_Z            (0.5)
 #define PULLEY_PITCH         (4.0)  // 20 gt2 teeth = 40mm, or 4cm.
 #define THREAD_PER_STEP      (PULLEY_PITCH / STEPS_PER_TURN)
 

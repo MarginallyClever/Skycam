@@ -429,20 +429,12 @@ ISR(TIMER1_COMPA_vect) {
       // set the direction pins
       digitalWrite( MOTOR_0_DIR_PIN, working_seg->a[0].dir );
       digitalWrite( MOTOR_1_DIR_PIN, working_seg->a[1].dir );
-      #if NUM_MOTORS>=4
       digitalWrite( MOTOR_2_DIR_PIN, working_seg->a[3].dir );
-      #endif
-      #if NUM_MOTORS>=5
       digitalWrite( MOTOR_3_DIR_PIN, working_seg->a[4].dir );
-      #endif
       global_step_dir_0 = (working_seg->a[0].dir==HIGH)?1:-1;
       global_step_dir_1 = (working_seg->a[1].dir==HIGH)?1:-1;
-      #if NUM_MOTORS>=4
+      global_step_dir_2 = (working_seg->a[2].dir==HIGH)?1:-1;
       global_step_dir_3 = (working_seg->a[3].dir==HIGH)?1:-1;
-      #endif
-      #if NUM_MOTORS>=5
-      global_step_dir_4 = (working_seg->a[4].dir==HIGH)?1:-1;
-      #endif
 
       // set frequency to segment feed rate
       nominal_OCR1A = calc_timer(working_seg->feed_rate_max);
@@ -460,20 +452,12 @@ ISR(TIMER1_COMPA_vect) {
       steps_taken=0;
       delta0 = working_seg->a[0].absdelta;
       delta1 = working_seg->a[1].absdelta;
-      #if NUM_MOTORS>=4
+      delta2 = working_seg->a[2].absdelta;
       delta3 = working_seg->a[3].absdelta;
-      #endif
-      #if NUM_MOTORS>=5
-      delta4 = working_seg->a[4].absdelta;
-      #endif
       over0 = -(steps_total>>1);
       over1 = -(steps_total>>1);
-      #if NUM_MOTORS>=4
+      over2 = -(steps_total>>1);
       over3 = -(steps_total>>1);
-      #endif
-      #if NUM_MOTORS>=5
-      over4 = -(steps_total>>1);
-      #endif
       accel_until=working_seg->accel_until;
       decel_after=working_seg->decel_after;
       return;
@@ -486,26 +470,10 @@ ISR(TIMER1_COMPA_vect) {
   if( working_seg != NULL ) {
     // move each axis
     for(uint8_t i=0;i<step_multiplier;++i) {
-      // M0
-      over0 += delta0;
-      if(over0 > 0) {
-        digitalWrite(MOTOR_0_STEP_PIN,LOW);
-      }
-      // M1
-      over1 += delta1;
-      if(over1 > 0) {
-        digitalWrite(MOTOR_1_STEP_PIN,LOW);
-      }
-      // M2
-      over2 += delta2;
-      if(over2 > 0) {
-        digitalWrite(MOTOR_2_STEP_PIN,LOW);
-      }
-      // M3
-      over3 += delta3;
-      if(over3 > 0) {
-        digitalWrite(MOTOR_3_STEP_PIN,LOW);
-      }
+      over0 += delta0;      if(over0 > 0) digitalWrite(MOTOR_0_STEP_PIN,LOW);  // M0
+      over1 += delta1;      if(over1 > 0) digitalWrite(MOTOR_1_STEP_PIN,LOW);  // M1
+      over2 += delta2;      if(over2 > 0) digitalWrite(MOTOR_2_STEP_PIN,LOW);  // M2
+      over3 += delta3;      if(over3 > 0) digitalWrite(MOTOR_3_STEP_PIN,LOW);  // M3
       // now that the pins have had a moment to settle, do the second half of the steps.
       // M0
       if(over0 > 0) {

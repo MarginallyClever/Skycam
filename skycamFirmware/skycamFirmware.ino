@@ -139,10 +139,10 @@ void printFeedRate() {
 void IK(float x, float y, float z, long *motorStepArray) {
   float dx,dy,dz;
 
-  dx = x - limit_ax;  dy = y - limit_ay;  dz = z - limit_az;  motorStepArray[0] = lround( sqrt(dx*dx+dy*dy+dz*dz) / THREAD_PER_STEP );
-  dx = x - limit_bx;  dy = y - limit_by;  dz = z - limit_bz;  motorStepArray[1] = lround( sqrt(dx*dx+dy*dy+dz*dz) / THREAD_PER_STEP );
-  dx = x - limit_cx;  dy = y - limit_cy;  dz = z - limit_cz;  motorStepArray[2] = lround( sqrt(dx*dx+dy*dy+dz*dz) / THREAD_PER_STEP );
-  dx = x - limit_dx;  dy = y - limit_dy;  dz = z - limit_dz;  motorStepArray[3] = lround( sqrt(dx*dx+dy*dy+dz*dz) / THREAD_PER_STEP );
+  dx = abs(x - limit_ax)+PLOTTER_RADIUS;  dy = abs(y - limit_ay)+PLOTTER_RADIUS;  dz = abs(z - limit_az)+PLOTTER_Z;  motorStepArray[0] = lround( sqrt(dx*dx+dy*dy+dz*dz) / THREAD_PER_STEP );
+  dx = abs(x - limit_bx)+PLOTTER_RADIUS;  dy = abs(y - limit_by)+PLOTTER_RADIUS;  dz = abs(z - limit_bz)+PLOTTER_Z;  motorStepArray[1] = lround( sqrt(dx*dx+dy*dy+dz*dz) / THREAD_PER_STEP );
+  dx = abs(x - limit_cx)+PLOTTER_RADIUS;  dy = abs(y - limit_cy)+PLOTTER_RADIUS;  dz = abs(z - limit_cz)+PLOTTER_Z;  motorStepArray[2] = lround( sqrt(dx*dx+dy*dy+dz*dz) / THREAD_PER_STEP );
+  dx = abs(x - limit_dx)+PLOTTER_RADIUS;  dy = abs(y - limit_dy)+PLOTTER_RADIUS;  dz = abs(z - limit_dz)+PLOTTER_Z;  motorStepArray[3] = lround( sqrt(dx*dx+dy*dy+dz*dz) / THREAD_PER_STEP );
 }
 
 

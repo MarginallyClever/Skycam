@@ -169,10 +169,10 @@ void M101() {
   int q = parseNumber('Q',-1);
   float x,y,z;
   switch(q) {
-    case 0:  x = parseNumber('X',limit_ax);  y = parseNumber('Y',limit_ay);  z = parseNumber('Z',limit_az);  break;
-    case 1:  x = parseNumber('X',limit_bx);  y = parseNumber('Y',limit_by);  z = parseNumber('Z',limit_bz);  break;
-    case 2:  x = parseNumber('X',limit_cx);  y = parseNumber('Y',limit_cy);  z = parseNumber('Z',limit_cz);  break;
-    case 3:  x = parseNumber('X',limit_dx);  y = parseNumber('Y',limit_dy);  z = parseNumber('Z',limit_dz);  break;
+    case 0:  limit_ax = parseNumber('X',limit_ax);  limit_ay = parseNumber('Y',limit_ay);  limit_az = parseNumber('Z',limit_az);  break;
+    case 1:  limit_bx = parseNumber('X',limit_bx);  limit_by = parseNumber('Y',limit_by);  limit_bz = parseNumber('Z',limit_bz);  break;
+    case 2:  limit_cx = parseNumber('X',limit_cx);  limit_cy = parseNumber('Y',limit_cy);  limit_cz = parseNumber('Z',limit_cz);  break;
+    case 3:  limit_dx = parseNumber('X',limit_dx);  limit_dy = parseNumber('Y',limit_dy);  limit_dz = parseNumber('Z',limit_dz);  break;
     default:
       Serial.println(F("Invalid motor number. 1=a,2=b,3=c,4=d\n"));  
       return;
@@ -569,7 +569,7 @@ void processCommand() {
 
   cmd=parseNumber('D',-1);
   switch(cmd) {
-  case 0:  jogMotorTest();  break;  // jog one motor
+  case 0:  jogMotor();  break;  // jog one motor
   case 4:  SD_StartPrintingFile(strchr(serialBuffer,' ')+1);  break;  // read file
   case 5:  sayVersionNumber();  break;
   case 6:  // set home
@@ -592,7 +592,7 @@ void processCommand() {
 }
 
 
-void jogMotorTest() {
+void jogMotor() {
   int q=parseNumber('Q',-1);
   int stepPin,dirPin;
   

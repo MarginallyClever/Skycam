@@ -1,1 +1,0 @@
-java -classpath RXTXcomm.jar -Djava.library.path=classes\rxtxnative\Windows\i3680mingw32 -jar DrawbotGUI.jar
